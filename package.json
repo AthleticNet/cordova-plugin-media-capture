@@ -24,7 +24,9 @@
   ],
   "scripts": {
     "test": "npm run lint",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "ppatch": "npm version patch && npm publish",
+    "pminor": "npm version minor && npm publish"
   },
   "author": "Apache Software Foundation",
   "license": "Apache-2.0",
