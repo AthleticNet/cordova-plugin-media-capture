@@ -54,7 +54,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/AthleticNet/athletic-live-api.git"
+    "url": "git+https://github.com/AthleticNet/cordova-plugin-media-capture.git"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
