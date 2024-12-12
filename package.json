@@ -1,6 +1,6 @@
 {
   "name": "@athleticnet/cordova-plugin-media-capture",
-  "version": "5.0.10",
+  "version": "5.0.11",
   "description": "Cordova Media Capture Plugin",
   "types": "./types/index.d.ts",
   "cordova": {
