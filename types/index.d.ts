@@ -6,16 +6,16 @@
 // Copyright (c) Microsoft Open Technologies Inc
 // Licensed under the MIT license
 
-interface Navigator {
+export interface Navigator {
     device: Device;
 }
 
-interface Device {
+export interface Device {
     capture: Capture;
 }
 
 /** This plugin provides access to the device's audio, image, and video capture capabilities. */
-interface Capture {
+export interface Capture {
     /**
      * Start the audio recorder application and return information about captured audio clip files.
      * @param onSuccess Executes when the capture operation finishes with an array
@@ -61,7 +61,7 @@ interface Capture {
 }
 
 /** Encapsulates properties of a media capture file. */
-interface MediaFile {
+export interface MediaFile {
     /** The name of the file, without path information. */
     name: string;
     /** The full path of the file, including the name. */
@@ -83,7 +83,7 @@ interface MediaFile {
 }
 
 /** Encapsulates format information about a media file. */
-interface MediaFileData {
+export interface MediaFileData {
     /** The actual format of the audio and video content. */
     codecs: string;
     /** The average bitrate of the content. The value is zero for images. */
@@ -97,7 +97,7 @@ interface MediaFileData {
 }
 
 /** Encapsulates the error code resulting from a failed media capture operation. */
-interface CaptureError {
+export interface CaptureError {
     /**
      * One of the pre-defined error codes listed below.
      *     CaptureError.CAPTURE_INTERNAL_ERR
@@ -127,7 +127,7 @@ declare var CaptureError: {
 }
 
 /** Encapsulates audio capture configuration options. */
-interface AudioOptions {
+export interface AudioOptions {
     /**
      * The maximum number of audio clips the device's user can capture in a single
      * capture operation. The value must be greater than or equal to 1.
@@ -138,7 +138,7 @@ interface AudioOptions {
 }
 
 /** Encapsulates image capture configuration options. */
-interface ImageOptions {
+export interface ImageOptions {
     /**
      * The maximum number of images the user can capture in a single capture operation.
      * The value must be greater than or equal to 1 (defaults to 1).
@@ -147,7 +147,7 @@ interface ImageOptions {
 }
 
 /** Encapsulates video capture configuration options. */
-interface VideoOptions {
+export interface VideoOptions {
     /**
      * The maximum number of video clips the device's user can capture in a single
      * capture operation. The value must be greater than or equal to 1.
@@ -160,7 +160,7 @@ interface VideoOptions {
 }
 
 /** Encapsulates a set of media capture parameters that a device supports. */
-interface ConfigurationData {
+export interface ConfigurationData {
     /** The ASCII-encoded lowercase string representing the media type. */
     type: string;
     /** The height of the image or video in pixels. The value is zero for sound clips. */

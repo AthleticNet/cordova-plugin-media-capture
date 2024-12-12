@@ -326,14 +326,14 @@ public class Capture extends CordovaPlugin {
         Intent intent = new Intent(android.provider.MediaStore.ACTION_VIDEO_CAPTURE);
 
         String fileName = "";
-        if (req.fileName) {
+        if (!req.fileName.isEmpty()) {
             fileName = req.fileName;
         } else {
             String timeStamp = new SimpleDateFormat(FILE_TIMESTAMP_FORMAT).format(new Date());
-            filename = String.format("%s_%s.%s", "VID", timeStamp, "mp4");
+            fileName = String.format("%s_%s.%s", "VID", timeStamp, "mp4");
         }
 
-        File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM), filename);
+        File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM), fileName);
         Uri fileUri = FileProvider.getUriForFile(this.cordova.getActivity(), this.applicationId + ".fileprovider", file);
 
         this.videoAbsolutePath = file.getAbsolutePath();
