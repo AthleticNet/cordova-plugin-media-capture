@@ -327,7 +327,11 @@ public class Capture extends CordovaPlugin {
 
         String fileName = "";
         if (!req.fileName.isEmpty()) {
-            fileName = req.fileName;
+            if (req.fileName.endsWith(".mp4")) {
+                fileName = req.fileName;
+            } else {
+                fileName = req.fileName + ".mp4";
+            }
         } else {
             String timeStamp = new SimpleDateFormat(FILE_TIMESTAMP_FORMAT).format(new Date());
             fileName = String.format("%s_%s.%s", "VID", timeStamp, "mp4");
