@@ -29,6 +29,8 @@ const CaptureVideoOptions = function () {
     this.duration = 0;
     // Video quality parameter, 0 means low quality, suitable for MMS messages, and value 1 means high quality.
     this.quality = 1;
+    // File Name, default is current date time
+    this.fileName = undefined;
 };
 
 module.exports = CaptureVideoOptions;

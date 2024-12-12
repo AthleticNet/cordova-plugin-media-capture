@@ -99,9 +99,9 @@ public class Capture extends CordovaPlugin {
 
     private int numPics;                            // Number of pictures before capture activity
     private Uri imageUri;
-    private String videoAbsolutePath; // < 13 code
+    private String videoAbsolutePath;
 
-    private String applicationId; // < 13 code
+    private String applicationId;
 
 //    public void setContext(Context mCtx)
 //    {
@@ -281,14 +281,6 @@ public class Capture extends CordovaPlugin {
         return isMissingPermissions(req, cameraPermissions);
     }
 
-    // < 13 code
-    private File createFile(String prefix, String extension) {
-        String timeStamp = new SimpleDateFormat(FILE_TIMESTAMP_FORMAT).format(new Date());
-        String filename = String.format("%s_%s.%s", prefix, timeStamp, extension);
-
-        return new File(getTempDirectoryPath(), filename);
-    }
-
     /**
      * Sets up an intent to capture audio.  Result handled by onActivityResult()
      */
@@ -303,17 +295,6 @@ public class Capture extends CordovaPlugin {
         }
     }
 
-    // < 13 code block
-    private String getTempDirectoryPath() {
-        File cache = null;
-
-        // Use internal storage
-        cache = cordova.getActivity().getCacheDir();
-
-        // Create the cache directory if it doesn't exist
-        cache.mkdirs();
-        return cache.getAbsolutePath();
-    }
     /**
      * Sets up an intent to capture images.  Result handled by onActivityResult()
      */
@@ -340,22 +321,24 @@ public class Capture extends CordovaPlugin {
      * Sets up an intent to capture video.  Result handled by onActivityResult()
      */
     private void captureVideo(Request req) {
-        // from android <13 tablet: content://com.sec.android.app.camera.files/root/storage/emulated/0/DCIM/Camera/20240104_041902.mp4
-        // from android 13 my phone: content://media/external/video/media/1000005340 converts to realpath /storage/emulated/0/DCIM/Camera/PXL_20240104_122354006.mp4
-
         if (isMissingCameraPermissions(req, Manifest.permission.READ_MEDIA_VIDEO)) return;
 
         Intent intent = new Intent(android.provider.MediaStore.ACTION_VIDEO_CAPTURE);
 
-        // < 13 code block
-        if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-            File movie = createFile("VID", "mp4");
-            Uri videoUri = FileProvider.getUriForFile(this.cordova.getActivity(),
-                    this.applicationId + ".cordova.plugin.mediacapture.provider",
-                    movie);
-            this.videoAbsolutePath = movie.getAbsolutePath();
-            intent.putExtra(android.provider.MediaStore.EXTRA_OUTPUT, videoUri);
+        String fileName = "";
+        if (req.fileName) {
+            fileName = req.fileName;
+        } else {
+            String timeStamp = new SimpleDateFormat(FILE_TIMESTAMP_FORMAT).format(new Date());
+            filename = String.format("%s_%s.%s", "VID", timeStamp, "mp4");
         }
+
+        File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM), filename);
+        Uri fileUri = FileProvider.getUriForFile(this.cordova.getActivity(), this.applicationId + ".fileprovider", file);
+
+        this.videoAbsolutePath = file.getAbsolutePath();
+
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
 
         if(Build.VERSION.SDK_INT > 7){
             intent.putExtra("android.intent.extra.durationLimit", req.duration);
@@ -477,8 +460,8 @@ public class Capture extends CordovaPlugin {
     }
 
     public void onVideoActivityResult(Request req, Intent intent) {
-        // < 13 code block
-        if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+
+        if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || intent == null ) {
             if(this.videoAbsolutePath != null) {
                 req.results.put(createMediaFileWithAbsolutePath(this.videoAbsolutePath));
             } else {
