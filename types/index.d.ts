@@ -157,6 +157,8 @@ export interface VideoOptions {
     duration?: number;
     /** File Name, the default is the current date time */
     fileName?: string;
+    /** Folder Name for saving videos to inside of DCIM, default is top level of DCIM */
+    appDir?: string;
 }
 
 /** Encapsulates a set of media capture parameters that a device supports. */

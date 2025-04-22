@@ -163,6 +163,7 @@ public class PendingRequests {
         private static final String QUALITY_KEY = "quality";
         private static final String RESULTS_KEY = "results";
         private static final String FILENAME_KEY = "fileName";
+        private static final String APPDIR_KEY = "appDir";
 
         // Unique int used to identify this request in any Android Permission or Activity callbacks
         public int requestCode;
@@ -182,6 +183,9 @@ public class PendingRequests {
         // The filename of the media file (CAPTURE_VIDEO only)
         public String fileName;
 
+        // The folder name where the media file will be saved (CAPTURE_VIDEO only)
+        public String appDir;
+
         // The array of results to be returned to the javascript callback on success
         public JSONArray results = new JSONArray();
 
@@ -197,6 +201,7 @@ public class PendingRequests {
                 this.duration = options.optInt("duration", 0);
                 this.quality = options.optInt("quality", 1);
                 this.fileName = options.optString("fileName");
+                this.appDir = options.optString("appDir");
             }
 
             this.requestCode = incrementCurrentReqId();
@@ -210,6 +215,7 @@ public class PendingRequests {
             this.duration = bundle.getInt(DURATION_KEY);
             this.quality = bundle.getInt(QUALITY_KEY);
             this.fileName = bundle.getString(FILENAME_KEY);
+            this.appDir = bundle.getString(APPDIR_KEY);
 
             try {
                 this.results = new JSONArray(bundle.getString(RESULTS_KEY));
@@ -228,6 +234,7 @@ public class PendingRequests {
             bundle.putInt(QUALITY_KEY, this.quality);
             bundle.putString(RESULTS_KEY, this.results.toString());
             bundle.putString(FILENAME_KEY, this.fileName);
+            bundle.putString(APPDIR_KEY, this.appDir);
 
             return bundle;
         }

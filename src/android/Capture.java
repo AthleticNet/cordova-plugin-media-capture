@@ -51,6 +51,7 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.database.Cursor;
 import android.graphics.BitmapFactory;
 import android.media.MediaPlayer;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -74,7 +75,7 @@ public class Capture extends CordovaPlugin {
     private static final String LOG_TAG = "Capture";
 
     private static final int CAPTURE_INTERNAL_ERR = 0;
-//    private static final int CAPTURE_APPLICATION_BUSY = 1;
+    //    private static final int CAPTURE_APPLICATION_BUSY = 1;
 //    private static final int CAPTURE_INVALID_ARGUMENT = 2;
     private static final int CAPTURE_NO_MEDIA_FILES = 3;
     private static final int CAPTURE_PERMISSION_DENIED = 4;
@@ -87,8 +88,8 @@ public class Capture extends CordovaPlugin {
             };
         } else {
             storagePermissions = new String[] {
-                Manifest.permission.READ_EXTERNAL_STORAGE,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
             };
         }
     }
@@ -100,6 +101,7 @@ public class Capture extends CordovaPlugin {
     private int numPics;                            // Number of pictures before capture activity
     private Uri imageUri;
     private String videoAbsolutePath;
+    private String path;
 
     private String applicationId;
 
@@ -337,10 +339,21 @@ public class Capture extends CordovaPlugin {
             fileName = String.format("%s_%s.%s", "VID", timeStamp, "mp4");
         }
 
-        File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM), fileName);
+        File publicDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM);
+        File appDir = publicDir;
+        if (!req.appDir.isEmpty()) {
+            appDir = new File(publicDir, req.appDir);
+
+            if (!appDir.exists()) {
+                appDir.mkdirs();
+            }
+        }
+
+        File file = new File(appDir, fileName);
         Uri fileUri = FileProvider.getUriForFile(this.cordova.getActivity(), this.applicationId + ".fileprovider", file);
 
         this.videoAbsolutePath = file.getAbsolutePath();
+        this.path = file.getPath();
 
         intent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
 
@@ -464,6 +477,10 @@ public class Capture extends CordovaPlugin {
     }
 
     public void onVideoActivityResult(Request req, Intent intent) {
+        if (this.path != null) {
+            MediaScannerConnection.scanFile(cordova.getContext(), new String[]{this.path}, new String[]{VIDEO_MP4},
+                    (path, uri) -> {});
+        }
 
         if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || intent == null ) {
             if(this.videoAbsolutePath != null) {
@@ -645,11 +662,11 @@ public class Capture extends CordovaPlugin {
      */
     private Cursor queryImgDB(Uri contentStore) {
         return this.cordova.getActivity().getContentResolver().query(
-            contentStore,
-            new String[] { MediaStore.Images.Media._ID },
-            null,
-            null,
-            null);
+                contentStore,
+                new String[] { MediaStore.Images.Media._ID },
+                null,
+                null,
+                null);
     }
 
     /**
