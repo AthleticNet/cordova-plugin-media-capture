@@ -99,10 +99,10 @@ public class Capture extends CordovaPlugin {
     private final PendingRequests pendingRequests = new PendingRequests();
 
     private int numPics;                            // Number of pictures before capture activity
-    private Uri imageUri;
+    private String audioAbsolutePath;
+    private String imageAbsolutePath;
     private String videoAbsolutePath;
     private String path;
-
     private String applicationId;
 
 //    public void setContext(Context mCtx)
@@ -189,7 +189,7 @@ public class Capture extends CordovaPlugin {
 
         // If the mimeType isn't set the rest will fail
         // so let's see if we can determine it.
-        if (mimeType == null || mimeType.equals("") || "null".equals(mimeType)) {
+        if (mimeType == null || mimeType.isEmpty() || "null".equals(mimeType)) {
             mimeType = FileHelper.getMimeType(fileUrl, cordova);
         }
         LOG.d(LOG_TAG, "Mime type = " + mimeType);
@@ -256,7 +256,7 @@ public class Capture extends CordovaPlugin {
             }
         }
 
-        boolean isMissingPermissions = missingPermissions.size() > 0;
+        boolean isMissingPermissions = !missingPermissions.isEmpty();
         if (isMissingPermissions) {
             String[] missing = missingPermissions.toArray(new String[missingPermissions.size()]);
             PermissionHelper.requestPermissions(this, req.requestCode, missing);
@@ -276,6 +276,14 @@ public class Capture extends CordovaPlugin {
         return isMissingPermissions(req, cameraPermissions);
     }
 
+    private String getTempDirectoryPath() {
+        File cache = new File(cordova.getActivity().getCacheDir(), "org.apache.cordova.mediacapture");
+
+        // Create the cache directory if it doesn't exist
+        cache.mkdirs();
+        return cache.getAbsolutePath();
+    }
+
     /**
      * Sets up an intent to capture audio.  Result handled by onActivityResult()
      */
@@ -284,6 +292,15 @@ public class Capture extends CordovaPlugin {
 
         try {
             Intent intent = new Intent(android.provider.MediaStore.Audio.Media.RECORD_SOUND_ACTION);
+            String timeStamp = new SimpleDateFormat("yyyyMMddHHmmssSSS").format(new Date());
+            String fileName = "cdv_media_capture_audio_" + timeStamp + ".m4a";
+            File audio = new File(getTempDirectoryPath(), fileName);
+            Uri audioUri = FileProvider.getUriForFile(this.cordova.getActivity(),
+                    this.applicationId + ".cordova.plugin.mediacapture.provider",
+                    audio);
+            this.audioAbsolutePath = audio.getAbsolutePath();
+            intent.putExtra(android.provider.MediaStore.EXTRA_OUTPUT, audioUri);
+            LOG.d(LOG_TAG, "Recording an audio and saving to: " + this.audioAbsolutePath);
             this.cordova.startActivityForResult((CordovaPlugin) this, intent, req.requestCode);
         } catch (ActivityNotFoundException ex) {
             pendingRequests.resolveWithFailure(req, createErrorObject(CAPTURE_NOT_SUPPORTED, "No Activity found to handle Audio Capture."));
@@ -301,11 +318,16 @@ public class Capture extends CordovaPlugin {
 
         Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
 
-        ContentResolver contentResolver = this.cordova.getActivity().getContentResolver();
-        ContentValues cv = new ContentValues();
-        cv.put(MediaStore.Images.Media.MIME_TYPE, IMAGE_JPEG);
-        imageUri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, cv);
-        LOG.d(LOG_TAG, "Taking a picture and saving to: " + imageUri.toString());
+        String timeStamp = new SimpleDateFormat("yyyyMMddHHmmssSSS").format(new Date());
+        String fileName = "cdv_media_capture_image_" + timeStamp + ".jpg";
+        File image = new File(getTempDirectoryPath(), fileName);
+
+        Uri imageUri = FileProvider.getUriForFile(this.cordova.getActivity(),
+                this.applicationId + ".cordova.plugin.mediacapture.provider",
+                image);
+        this.imageAbsolutePath = image.getAbsolutePath();
+        intent.putExtra(android.provider.MediaStore.EXTRA_OUTPUT, imageUri);
+        LOG.d(LOG_TAG, "Taking a picture and saving to: " + this.imageAbsolutePath);
 
         intent.putExtra(android.provider.MediaStore.EXTRA_OUTPUT, imageUri);
 
@@ -376,7 +398,7 @@ public class Capture extends CordovaPlugin {
                 public void run() {
                     switch(req.action) {
                         case CAPTURE_AUDIO:
-                            onAudioActivityResult(req, intent);
+                            onAudioActivityResult(req);
                             break;
                         case CAPTURE_IMAGE:
                             onImageActivityResult(req);
@@ -415,18 +437,11 @@ public class Capture extends CordovaPlugin {
     }
 
 
-    public void onAudioActivityResult(Request req, Intent intent) {
-        // Get the uri of the audio clip
-        Uri data = intent.getData();
-        if (data == null) {
-            pendingRequests.resolveWithFailure(req, createErrorObject(CAPTURE_NO_MEDIA_FILES, "Error: data is null"));
-            return;
-        }
-
-        // Create a file object from the uri
-        JSONObject mediaFile = createMediaFile(data);
+    public void onAudioActivityResult(Request req) {
+        // create a file object from the audio absolute path
+        JSONObject mediaFile = createMediaFileWithAbsolutePath(this.audioAbsolutePath);
         if (mediaFile == null) {
-            pendingRequests.resolveWithFailure(req, createErrorObject(CAPTURE_INTERNAL_ERR, "Error: no mediaFile created from " + data));
+            pendingRequests.resolveWithFailure(req, createErrorObject(CAPTURE_INTERNAL_ERR, "Error: no mediaFile created from " + this.audioAbsolutePath));
             return;
         }
 
@@ -442,17 +457,10 @@ public class Capture extends CordovaPlugin {
     }
 
     public void onImageActivityResult(Request req) {
-        // Get the uri of the image
-        Uri data = imageUri;
-        if (data == null) {
-            pendingRequests.resolveWithFailure(req, createErrorObject(CAPTURE_NO_MEDIA_FILES, "Error: data is null"));
-            return;
-        }
-
-        // Create a file object from the uri
-        JSONObject mediaFile = createMediaFile(data);
+        // create a file object from the image absolute path
+        JSONObject mediaFile = createMediaFileWithAbsolutePath(this.imageAbsolutePath);
         if (mediaFile == null) {
-            pendingRequests.resolveWithFailure(req, createErrorObject(CAPTURE_INTERNAL_ERR, "Error: no mediaFile created from " + data));
+            pendingRequests.resolveWithFailure(req, createErrorObject(CAPTURE_INTERNAL_ERR, "Error: no mediaFile created from " + this.imageAbsolutePath));
             return;
         }
 
@@ -475,46 +483,22 @@ public class Capture extends CordovaPlugin {
                     (path, uri) -> {});
         }
 
-        if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || intent == null ) {
-            if(this.videoAbsolutePath != null) {
-                req.results.put(createMediaFileWithAbsolutePath(this.videoAbsolutePath));
-            } else {
-                pendingRequests.resolveWithFailure(req, createErrorObject(CAPTURE_NO_MEDIA_FILES, "Error: data is null"));
-            }
-
-            if (req.results.length() >= req.limit) {
-                // Send Uri back to JavaScript for viewing video
-                pendingRequests.resolveWithSuccess(req);
-            } else {
-                // still need to capture more videos
-                captureVideo(req);
-            }
-        } else {
-            // Get the uri of the video clip
-            Uri data = intent.getData();
-            if (data == null) {
-                pendingRequests.resolveWithFailure(req, createErrorObject(CAPTURE_NO_MEDIA_FILES, "Error: data is null"));
-                return;
-            }
-
-            // Create a file object from the uri
-            JSONObject mediaFile = createMediaFile(data);
-            if (mediaFile == null) {
-                pendingRequests.resolveWithFailure(req, createErrorObject(CAPTURE_INTERNAL_ERR, "Error: no mediaFile created from " + data));
-                return;
-            }
-
-            req.results.put(mediaFile);
-
-            if (req.results.length() >= req.limit) {
-                // Send Uri back to JavaScript for viewing video
-                pendingRequests.resolveWithSuccess(req);
-            } else {
-                // still need to capture more video clips
-                captureVideo(req);
-            }
+        // create a file object from the video absolute path
+        JSONObject mediaFile = createMediaFileWithAbsolutePath(this.videoAbsolutePath);
+        if (mediaFile == null) {
+            pendingRequests.resolveWithFailure(req, createErrorObject(CAPTURE_INTERNAL_ERR, "Error: no mediaFile created from " + this.videoAbsolutePath));
+            return;
         }
-    }
+
+        req.results.put(mediaFile);
+
+        if (req.results.length() >= req.limit) {
+            // Send Uri back to JavaScript for viewing video
+            pendingRequests.resolveWithSuccess(req);
+        } else {
+            // still need to capture more video clips
+            captureVideo(req);
+        }    }
 
     /**
      * Creates a JSONObject that represents a File from the Uri
@@ -598,16 +582,15 @@ public class Capture extends CordovaPlugin {
         try {
             Method gpm = webViewClass.getMethod("getPluginManager");
             pm = (PluginManager) gpm.invoke(webView);
-        } catch (NoSuchMethodException e) {
-        } catch (IllegalAccessException e) {
-        } catch (InvocationTargetException e) {
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            // Do Nothing
         }
         if (pm == null) {
             try {
                 Field pmf = webViewClass.getField("pluginManager");
                 pm = (PluginManager)pmf.get(webView);
-            } catch (NoSuchFieldException e) {
-            } catch (IllegalAccessException e) {
+            } catch (NoSuchFieldException | IllegalAccessException e) {
+                // Do Nothing
             }
         }
         FileUtils filePlugin = (FileUtils) pm.getPlugin("File");
@@ -624,7 +607,12 @@ public class Capture extends CordovaPlugin {
             // are reported as video/3gpp. I'm doing this hacky check of the URI to see if it
             // is stored in the audio or video content store.
             if (fp.getAbsoluteFile().toString().endsWith(".3gp") || fp.getAbsoluteFile().toString().endsWith(".3gpp")) {
-                obj.put("type", VIDEO_3GPP);
+                Uri data = Uri.fromFile(fp);
+                if (data.toString().contains("/audio/")) {
+                    obj.put("type", AUDIO_3GPP);
+                } else {
+                    obj.put("type", VIDEO_3GPP);
+                }
             } else {
                 obj.put("type", FileHelper.getMimeType(Uri.fromFile(fp), cordova));
             }
