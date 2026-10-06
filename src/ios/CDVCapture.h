@@ -18,7 +18,7 @@
  */
 
 #import <Foundation/Foundation.h>
-#import <MobileCoreServices/MobileCoreServices.h>
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #import <AVFoundation/AVFoundation.h>
 #import <Cordova/CDVPlugin.h>
 #import "CDVFile.h"
