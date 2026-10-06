@@ -118,7 +118,7 @@ xmlns:android="http://schemas.android.com/apk/res/android"
         <resource-file src="src/ios/CDVCapture.bundle" />
 
         <framework src="CoreGraphics.framework" />
-        <framework src="MobileCoreServices.framework" />
+        <framework src="UniformTypeIdentifiers.framework" />
 
     </platform>
 

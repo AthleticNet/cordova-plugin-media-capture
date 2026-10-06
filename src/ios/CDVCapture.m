@@ -147,7 +147,7 @@
         pickerController.allowsEditing = NO;
         if ([pickerController respondsToSelector:@selector(mediaTypes)]) {
             // iOS 3.0
-            pickerController.mediaTypes = [NSArray arrayWithObjects:(NSString*)kUTTypeImage, nil];
+            pickerController.mediaTypes = [NSArray arrayWithObjects:UTTypeImage.identifier, nil];
         }
 
         /*if ([pickerController respondsToSelector:@selector(cameraCaptureMode)]){
@@ -235,10 +235,10 @@
             types = [UIImagePickerController availableMediaTypesForSourceType:UIImagePickerControllerSourceTypeCamera];
             // NSLog(@"MediaTypes: %@", [types description]);
 
-            if ([types containsObject:(NSString*)kUTTypeMovie]) {
-                mediaType = (NSString*)kUTTypeMovie;
-            } else if ([types containsObject:(NSString*)kUTTypeVideo]) {
-                mediaType = (NSString*)kUTTypeVideo;
+            if ([types containsObject:UTTypeMovie.identifier]) {
+                mediaType = UTTypeMovie.identifier;
+            } else if ([types containsObject:UTTypeVideo.identifier]) {
+                mediaType = UTTypeVideo.identifier;
             }
         }
     }
@@ -257,7 +257,7 @@
         // iOS 3.0
         pickerController.mediaTypes = [NSArray arrayWithObjects:mediaType, nil];
 
-        if ([mediaType isEqualToString:(NSString*)kUTTypeMovie]){
+        if ([mediaType isEqualToString:UTTypeMovie.identifier]){
             pickerController.videoMaximumDuration = 60 * 60; // 1 hour
             //NSLog(@"pickerController.videoMaximumDuration = %f", pickerController.videoMaximumDuration);
         }
@@ -394,7 +394,7 @@
         if ([UIImagePickerController respondsToSelector:@selector(availableMediaTypesForSourceType:)]) {
             NSArray* types = [UIImagePickerController availableMediaTypesForSourceType:UIImagePickerControllerSourceTypeCamera];
 
-            if ([types containsObject:(NSString*)kUTTypeMovie]) {
+            if ([types containsObject:UTTypeMovie.identifier]) {
                 NSDictionary* mov = [NSDictionary dictionaryWithObjectsAndKeys:
                     [NSNumber numberWithInt:0], kW3CMediaFormatHeight,
                     [NSNumber numberWithInt:0], kW3CMediaFormatWidth,
@@ -575,7 +575,7 @@
 
     UIImage* image = nil;
     NSString* mediaType = [info objectForKey:UIImagePickerControllerMediaType];
-    if (!mediaType || [mediaType isEqualToString:(NSString*)kUTTypeImage]) {
+    if (!mediaType || [mediaType isEqualToString:UTTypeImage.identifier]) {
         // mediaType is nil then only option is UIImagePickerControllerOriginalImage
         if ([UIImagePickerController respondsToSelector:@selector(allowsEditing)] &&
             (cameraPicker.allowsEditing && [info objectForKey:UIImagePickerControllerEditedImage])) {
@@ -587,7 +587,7 @@
     if (image != nil) {
         // mediaType was image
         result = [self processImage:image type:cameraPicker.mimeType forCallbackId:callbackId];
-    } else if ([mediaType isEqualToString:(NSString*)kUTTypeMovie]) {
+    } else if ([mediaType isEqualToString:UTTypeMovie.identifier]) {
         // process video
         NSString* moviePath = [(NSURL *)[info objectForKey:UIImagePickerControllerMediaURL] path];
         if (moviePath) {
@@ -625,9 +625,7 @@
 
 @end
 
-@interface CDVAudioRecorderViewController () <UIAdaptivePresentationControllerDelegate> {
-    UIStatusBarStyle _previousStatusBarStyle;
-}
+@interface CDVAudioRecorderViewController () <UIAdaptivePresentationControllerDelegate>
 @end
 
 @implementation CDVAudioRecorderViewController
@@ -660,7 +658,6 @@
         self.callbackId = theCallbackId;
         self.errorCode = CAPTURE_NO_MEDIA_FILES;
         self.isTimed = self.duration != nil;
-        _previousStatusBarStyle = [UIApplication sharedApplication].statusBarStyle;
 
         return self;
     }
